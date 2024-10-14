@@ -123,5 +123,13 @@ func GetFileState(filePath string, byteSizeFlag bool, linesFlag bool, wordsFlag 
 }
 
 func PrintFileOutput(fileOutput []string) {
-	fmt.Println(strings.Join(fileOutput, " "))
+	outputFormatted := make([]string, 0)
+	for i, c := range fileOutput {
+		if i == len(fileOutput)-1 {
+			outputFormatted = append(outputFormatted, fmt.Sprintf("%s", c))
+		} else {
+			outputFormatted = append(outputFormatted, fmt.Sprintf("%12s", c))
+		}
+	}
+	fmt.Println(strings.Join(outputFormatted, " "))
 }
