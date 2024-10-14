@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "ccwc/cmd"
 
 func main() {
-	fmt.Println("Welcome to ccwc")
+	cmd.Execute()
 }
