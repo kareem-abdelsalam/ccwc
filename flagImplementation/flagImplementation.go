@@ -45,16 +45,9 @@ func lineCounter(r io.Reader) (int, error) {
 	}
 }
 
-func getFile(filePath string) (*os.File, error) {
-	if filePath == "" {
-		return os.Stdin, nil
-	}
-	return os.Open(filePath)
-}
-
-func GetFileState(filePath string, byteSizeFlag bool, linesFlag bool, wordsFlag bool, charsFlag bool) ([]string, error) {
+func GetFileState(filePath string, byteSizeFlag bool, linesFlag bool, wordsFlag bool, charsFlag bool, fileIsStdin bool) ([]string, error) {
 	var fileOutput = make([]string, 0)
-	file, err := getFile(filePath)
+	file, err := os.Open(filePath)
 	if err != nil {
 		return fileOutput, err
 	}
@@ -100,7 +93,11 @@ func GetFileState(filePath string, byteSizeFlag bool, linesFlag bool, wordsFlag 
 		file.Seek(0, io.SeekStart)
 	}
 
-	fileOutput = append(fileOutput, filePath)
+	if fileIsStdin {
+		fileOutput = append(fileOutput, "")
+	} else {
+		fileOutput = append(fileOutput, filePath)
+	}
 	return fileOutput, nil
 }
 
