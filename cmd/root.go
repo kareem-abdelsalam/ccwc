@@ -16,23 +16,36 @@ var rootCmd = &cobra.Command{
 	Use:   "ccwc",
 	Short: "ccwc is a reimplementation of wc tool",
 	Long:  "ccwc is a reimplementation of wc tool",
-	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var allFlagsFalse = !byteSizeFlag && !linesFlag && !wordsFlag && !charsFlag
-		var output = make([][]string, 0)
-		for _, fileName := range args {
-			fileOutput, err := flagImplementation.GetFileState(fileName,
+
+		if len(args) == 0 {
+			stdinOutput, err := flagImplementation.GetFileState("",
 				byteSizeFlag || allFlagsFalse, linesFlag || allFlagsFalse,
 				wordsFlag || allFlagsFalse, charsFlag || allFlagsFalse)
+
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			output = append(output, fileOutput)
-		}
 
-		for _, fileOutput := range output {
-			flagImplementation.PrintFileOutput(fileOutput)
+			flagImplementation.PrintFileOutput(stdinOutput)
+		} else {
+			var output = make([][]string, 0)
+			for _, fileName := range args {
+				fileOutput, err := flagImplementation.GetFileState(fileName,
+					byteSizeFlag || allFlagsFalse, linesFlag || allFlagsFalse,
+					wordsFlag || allFlagsFalse, charsFlag || allFlagsFalse)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				output = append(output, fileOutput)
+			}
+
+			for _, fileOutput := range output {
+				flagImplementation.PrintFileOutput(fileOutput)
+			}
 		}
 	},
 }

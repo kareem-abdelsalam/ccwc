@@ -10,6 +10,22 @@ import (
 	"strings"
 )
 
+func counter(r io.Reader, splitterType func(data []byte, atEOF bool) (advance int, token []byte, err error)) (int, error) {
+	fileScanner := bufio.NewScanner(r)
+	fileScanner.Split(splitterType)
+
+	count := 0
+	for fileScanner.Scan() {
+		count++
+	}
+
+	if err := fileScanner.Err(); err != nil {
+		return count, err
+	}
+
+	return count, nil
+}
+
 func lineCounter(r io.Reader) (int, error) {
 	buf := make([]byte, 32*1024)
 	count := 0
@@ -29,93 +45,59 @@ func lineCounter(r io.Reader) (int, error) {
 	}
 }
 
-func wordsCounter(r io.Reader) (int, error) {
-	fileScanner := bufio.NewScanner(r)
-	fileScanner.Split(bufio.ScanWords)
-
-	count := 0
-	for fileScanner.Scan() {
-		count++
+func getFile(filePath string) (*os.File, error) {
+	if filePath == "" {
+		return os.Stdin, nil
 	}
-
-	if err := fileScanner.Err(); err != nil {
-		return count, err
-	}
-
-	return count, nil
-}
-
-func charsCounter(r io.Reader) (int, error) {
-	fileScanner := bufio.NewScanner(r)
-	fileScanner.Split(bufio.ScanRunes)
-
-	count := 0
-	for fileScanner.Scan() {
-		count++
-	}
-
-	if err := fileScanner.Err(); err != nil {
-		return count, err
-	}
-
-	return count, nil
+	return os.Open(filePath)
 }
 
 func GetFileState(filePath string, byteSizeFlag bool, linesFlag bool, wordsFlag bool, charsFlag bool) ([]string, error) {
 	var fileOutput = make([]string, 0)
+	file, err := getFile(filePath)
+	if err != nil {
+		return fileOutput, err
+	}
+	defer file.Close()
 
 	if byteSizeFlag {
-		fileStat, err := os.Stat(filePath)
+		numberOfBytes, err := counter(file, bufio.ScanBytes)
 		if err != nil {
 			return fileOutput, err
 		}
 
-		fileOutput = append(fileOutput, strconv.Itoa(int(fileStat.Size())))
+		fileOutput = append(fileOutput, strconv.Itoa(numberOfBytes))
+		file.Seek(0, io.SeekStart)
 	}
 
 	if linesFlag {
-		file, err := os.Open(filePath)
-		if err != nil {
-			return fileOutput, err
-		}
-		defer file.Close()
-
 		numberOfLines, err := lineCounter(file)
 		if err != nil {
 			return fileOutput, err
 		}
 
 		fileOutput = append(fileOutput, strconv.Itoa(numberOfLines))
+		file.Seek(0, io.SeekStart)
 	}
 
 	if wordsFlag {
-		file, err := os.Open(filePath)
-		if err != nil {
-			return fileOutput, err
-		}
-		defer file.Close()
-
-		numberOfWords, err := wordsCounter(file)
+		numberOfWords, err := counter(file, bufio.ScanWords)
 		if err != nil {
 			return fileOutput, err
 		}
 
 		fileOutput = append(fileOutput, strconv.Itoa(numberOfWords))
+		file.Seek(0, io.SeekStart)
 	}
 
 	if charsFlag {
-		file, err := os.Open(filePath)
-		if err != nil {
-			return fileOutput, err
-		}
-		defer file.Close()
-
-		numberOfChars, err := charsCounter(file)
+		numberOfChars, err := counter(file, bufio.ScanRunes)
 		if err != nil {
 			return fileOutput, err
 		}
 
 		fileOutput = append(fileOutput, strconv.Itoa(numberOfChars))
+		file.Seek(0, io.SeekStart)
 	}
 
 	fileOutput = append(fileOutput, filePath)
