@@ -16,6 +16,7 @@ func generateFileReadCalls(mockOsFile *wcImplementation.MockOSFile, numberOfOper
 	var buff = make([]byte, 4096)
 	var longByte = []byte("Hëllo Wôrd!\n")
 	var shortByte = []byte("Wôrd\n")
+
 	calls := make([]any, 0)
 
 	for i := 0; i < numberOfOperations; i++ {
