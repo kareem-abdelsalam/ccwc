@@ -1,11 +1,10 @@
-package flagImplementation
+package wcImplementation
 
 import (
 	"bufio"
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -45,13 +44,8 @@ func lineCounter(r io.Reader) (int, error) {
 	}
 }
 
-func GetFileState(filePath string, byteSizeFlag bool, linesFlag bool, wordsFlag bool, charsFlag bool, fileIsStdin bool) ([]string, error) {
+func GetFileState(file OSFile, byteSizeFlag bool, linesFlag bool, wordsFlag bool, charsFlag bool) ([]string, error) {
 	var fileOutput = make([]string, 0)
-	file, err := os.Open(filePath)
-	if err != nil {
-		return fileOutput, err
-	}
-	defer file.Close()
 
 	if byteSizeFlag {
 		numberOfBytes, err := counter(file, bufio.ScanBytes)
@@ -93,11 +87,6 @@ func GetFileState(filePath string, byteSizeFlag bool, linesFlag bool, wordsFlag 
 		file.Seek(0, io.SeekStart)
 	}
 
-	if fileIsStdin {
-		fileOutput = append(fileOutput, "")
-	} else {
-		fileOutput = append(fileOutput, filePath)
-	}
 	return fileOutput, nil
 }
 

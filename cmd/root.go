@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"ccwc/flagImplementation"
+	"ccwc/wcImplementation"
 	"fmt"
 	"github.com/spf13/cobra"
 	"io"
@@ -29,7 +29,6 @@ var rootCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			// Create a temporary file in the default temporary directory
 			tmpFile, err := os.CreateTemp("", "ccwc-temp-os-stdin-*.txt")
 			if err != nil {
 				fmt.Println(err)
@@ -37,7 +36,6 @@ var rootCmd = &cobra.Command{
 			}
 			defer os.Remove(tmpFile.Name())
 
-			// Write the data to the temp file
 			if _, err := tmpFile.Write(data); err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -46,19 +44,35 @@ var rootCmd = &cobra.Command{
 			args = append(args, tmpFile.Name())
 		}
 		var output = make([][]string, 0)
+		var myOS = wcImplementation.NewOSFS()
 		for _, fileName := range args {
-			fileOutput, err := flagImplementation.GetFileState(fileName,
-				byteSizeFlag || allFlagsFalse, linesFlag || allFlagsFalse,
-				wordsFlag || allFlagsFalse, charsFlag || allFlagsFalse, fileIsStdin)
+
+			file, err := myOS.Open(fileName)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			output = append(output, fileOutput)
+			defer file.Close()
 
-			for _, fileOutput := range output {
-				flagImplementation.PrintFileOutput(fileOutput)
+			fileOutput, err := wcImplementation.GetFileState(file,
+				byteSizeFlag || allFlagsFalse, linesFlag || allFlagsFalse,
+				wordsFlag || allFlagsFalse, charsFlag || allFlagsFalse)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
 			}
+
+			if fileIsStdin {
+				fileOutput = append(fileOutput, "")
+			} else {
+				fileOutput = append(fileOutput, fileName)
+			}
+
+			output = append(output, fileOutput)
+		}
+
+		for _, fileOutput := range output {
+			wcImplementation.PrintFileOutput(fileOutput)
 		}
 	},
 }
