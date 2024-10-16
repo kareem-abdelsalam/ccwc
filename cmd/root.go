@@ -13,6 +13,29 @@ var linesFlag bool
 var wordsFlag bool
 var charsFlag bool
 
+func flushErrorMsgAndExit(err error) {
+	fmt.Println(err)
+	os.Exit(1)
+}
+
+func convertStdinToTmpFile() *os.File {
+	data, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		flushErrorMsgAndExit(err)
+	}
+
+	tmpFile, err := os.CreateTemp("", "ccwc-temp-os-stdin-*.txt")
+	if err != nil {
+		flushErrorMsgAndExit(err)
+	}
+
+	if _, err := tmpFile.Write(data); err != nil {
+		flushErrorMsgAndExit(err)
+	}
+
+	return tmpFile
+}
+
 var rootCmd = &cobra.Command{
 	Use:   "ccwc",
 	Short: "ccwc is a reimplementation of wc tool",
@@ -23,23 +46,9 @@ var rootCmd = &cobra.Command{
 
 		if len(args) == 0 {
 			fileIsStdin = true
-			data, err := io.ReadAll(os.Stdin)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
 
-			tmpFile, err := os.CreateTemp("", "ccwc-temp-os-stdin-*.txt")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
+			tmpFile := convertStdinToTmpFile()
 			defer os.Remove(tmpFile.Name())
-
-			if _, err := tmpFile.Write(data); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
 
 			args = append(args, tmpFile.Name())
 		}
@@ -49,8 +58,7 @@ var rootCmd = &cobra.Command{
 
 			file, err := myOS.Open(fileName)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				flushErrorMsgAndExit(err)
 			}
 			defer file.Close()
 
@@ -58,8 +66,7 @@ var rootCmd = &cobra.Command{
 				byteSizeFlag || allFlagsFalse, linesFlag || allFlagsFalse,
 				wordsFlag || allFlagsFalse, charsFlag || allFlagsFalse)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				flushErrorMsgAndExit(err)
 			}
 
 			if fileIsStdin {
@@ -84,7 +91,6 @@ func Execute() {
 	rootCmd.PersistentFlags().BoolVarP(&charsFlag, "m", "m", false, "number of characters")
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		flushErrorMsgAndExit(err)
 	}
 }
